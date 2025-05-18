@@ -1,3 +1,5 @@
+import main.InvertedIndex;
+
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;

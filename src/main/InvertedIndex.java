@@ -1,5 +1,8 @@
+package main;
+
+import customUtil.Stemmer;
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InvertedIndex {
     private final Map<String, Set<String>> invertedIndex = new HashMap<>();

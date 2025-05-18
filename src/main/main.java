@@ -11,8 +11,11 @@ public class main {
             System.out.print("1. Mencari kata kunci" +
                     "\nPilih: ");
             int angka = sc.nextInt();
-            if (angka ) {
+            if (angka == 1) {
+                System.out.print("\nMasukkan kata kunci: ");
+                String query = sc.next();
 
+                System.out.println("\nHasil pencarian: " + query + "\n");
             } else {
                 loop = false;
             }

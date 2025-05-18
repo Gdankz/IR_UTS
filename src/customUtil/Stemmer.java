@@ -1,3 +1,5 @@
+package customUtil;
+
 public class Stemmer {
     public static String stem(String word) {
 //        if (word.length() <= 3) return word;
