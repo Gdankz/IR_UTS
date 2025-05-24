@@ -67,6 +67,7 @@ public class InvertedIndex {
 //        System.out.println("Dictionary berhasil dibuat dengan " + dictionary.size() + " term.");
 //    }
 
+
     private int extractDocId(String fileName){
         String numberOnly = fileName.replaceAll("[^0-9]", "");
         return Integer.parseInt(numberOnly);
@@ -133,9 +134,22 @@ public class InvertedIndex {
             result = intersect(result, docs);
         }
 
-        System.out.println("intersect: " + result);
+        System.out.print("intersect: ");
 
+        ListIterator<Document> it = result.listIterator();
+
+        while (it.hasNext()) {
+            Document doc = it.next();
+            System.out.print(doc.getName());
+
+            if (it.hasNext()) {
+                System.out.print(", ");
+            }
+        }
+
+        System.out.println();
     }
+
 
     // bikin fungsi buat ngebaca query terus output postinglist dari query itu
     private LinkedListOrdered<Term> getSelected(String query) {
@@ -198,16 +212,31 @@ public class InvertedIndex {
         File folder = new File(PATH);
         LinkedListOrdered<Term> selectedTerms = new LinkedListOrdered<>();
 
+        boolean found = false;
+        System.out.println("Mencari file: " + filename.getAbsolutePath());
+
+        if (folder.listFiles() == null || folder.listFiles().length == 0) {
+            System.out.println("Folder tidak ada atau kosong");
+            return;
+        }
+
         // masih error: ga mau deteksi file yang dipilih
         for (File file : folder.listFiles()) {
-            if (file.equals(filename)) {
+            System.out.println("Memeriksa file: " + file.getAbsolutePath());
+            if (file.getName().equalsIgnoreCase(filename.getName())) {
                 selectedTerms = partInvertedIndex(selectedTerms, file);
+                found = true;
                 break;
             }
         }
 
-        if (selectedTerms.isEmpty()) {
+        if (!found) {
             System.out.println("File tidak ditemukan");
+            return;
+        }
+
+        if (selectedTerms.isEmpty()) {
+            System.out.println("File ditemukan tetapi tidak memiliki term yang valid");
             return;
         }
 
@@ -232,7 +261,9 @@ public class InvertedIndex {
                 masterDocs.addSort(file);
             }
         }
+        System.out.println("masterDocs:" + masterDocs);
     }
+
 
     private void makeInvertedIndex() {
         File folder = new File(PATH);
@@ -251,7 +282,10 @@ public class InvertedIndex {
     }
 
     public LinkedListOrdered<Term> partInvertedIndex(LinkedListOrdered<Term> dictionary, File file) {
+        System.out.println("Membaca file: " + file.getAbsolutePath());
         int docId = extractDocId(file.getName());
+
+        LinkedListOrdered<Term> selectedTerms = new LinkedListOrdered<>(); // Ini barusan ditambah
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
@@ -266,6 +300,8 @@ public class InvertedIndex {
 
                     if (stemmed.isEmpty()) continue;
 
+                    //System.out.println("Term diproses: " + stemmed);
+
                     Term existingTerm = findTermInDictionary(stemmed);
 
                     if (existingTerm == null){
@@ -274,12 +310,21 @@ public class InvertedIndex {
                         Document newDoc = new Document(docName, 1);
                         newTerm.setDocs(newDoc);
                         dictionary.addSort(newTerm);
+                        selectedTerms.addSort(newTerm);
                     } else {
-                        if (!containsDoc(existingTerm, docId)){
+                        if (!containsDoc(existingTerm, docId)) {
                             existingTerm.setDF(existingTerm.getDF() + 1);
                         }
+                        String docName = file.getName().split("\\W+")[0];
 
+                        for (Document doc : existingTerm.getDocs()) {
+                            if (doc.getName().equals(docName)){
+                                doc.setTF(doc.getTF() + 1);
+                                existingTerm.setDF(existingTerm.getDF() + 1);
+                            }
+                        }
                         addDocumentToTerm(existingTerm, docId);
+                        selectedTerms.addSort(existingTerm);
                     }
                 }
             }
@@ -289,7 +334,7 @@ public class InvertedIndex {
             throw new RuntimeException(e);
         }
 
-        return dictionary;
+        return selectedTerms;
     }
 
     public static void main(String[] args) {
