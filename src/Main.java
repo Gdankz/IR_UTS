@@ -1,4 +1,4 @@
-import main.InvertedIndex;
+import main.InvertedIndexcc;
 
 import java.io.*;
 import java.nio.file.*;
@@ -6,7 +6,7 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        InvertedIndex index = new InvertedIndex();
+        InvertedIndexcc index = new InvertedIndexcc();
 
 
         String folderPath = "Koleksi";

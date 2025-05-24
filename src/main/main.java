@@ -6,6 +6,8 @@ public class main {
     public static void main(String[] args) {
         boolean loop = true;
         Scanner sc = new Scanner(System.in);
+        Make_Dics mk = new Make_Dics();
+        mk.MakeDics();
 
         while (loop) {
             System.out.print("1. Mencari kata kunci" +
@@ -15,7 +17,7 @@ public class main {
                 System.out.print("\nMasukkan kata kunci: ");
                 String query = sc.next();
 
-                System.out.println("\nHasil pencarian: " + query + "\n");
+//                mk.processQuery(query);
             } else {
                 loop = false;
             }
