@@ -106,6 +106,7 @@ public class InvertedIndex {
     private void addDocumentToTerm(Term term, int docId){
         String docName = "doc" + docId;
         LinkedListOrdered<Document> docs = term.getDocs();
+        
         for (Document doc : docs){
             if (doc.getName().equals(docName)){
                 doc.setTF(doc.getTF() + 1);
@@ -213,20 +214,19 @@ public class InvertedIndex {
         LinkedListOrdered<Term> selectedTerms = new LinkedListOrdered<>();
 
         boolean found = false;
-        System.out.println("Mencari file: " + filename.getAbsolutePath());
 
         if (folder.listFiles() == null || folder.listFiles().length == 0) {
             System.out.println("Folder tidak ada atau kosong");
             return;
         }
 
-        // masih error: ga mau deteksi file yang dipilih
-        for (File file : folder.listFiles()) {
-            System.out.println("Memeriksa file: " + file.getAbsolutePath());
-            if (file.getName().equalsIgnoreCase(filename.getName())) {
-                selectedTerms = partInvertedIndex(selectedTerms, file);
-                found = true;
-                break;
+        for (Term term : dictionary) {
+            LinkedListOrdered<Document> docs = term.getDocs();
+
+            for (Document doc : docs) {
+                if (doc.getName().equals(filename.getName())) {
+                    selectedTerms.addSort(term);
+                }
             }
         }
 
@@ -282,9 +282,8 @@ public class InvertedIndex {
     }
 
     public LinkedListOrdered<Term> partInvertedIndex(LinkedListOrdered<Term> dictionary, File file) {
-        System.out.println("Membaca file: " + file.getAbsolutePath());
         int docId = extractDocId(file.getName());
-
+        String docName = "doc" + docId;
         LinkedListOrdered<Term> selectedTerms = new LinkedListOrdered<>(); // Ini barusan ditambah
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -298,33 +297,75 @@ public class InvertedIndex {
                     word = word.replaceAll(willIgnore, "");
                     String stemmed = Stemmer.stem(word);
 
-                    if (stemmed.isEmpty()) continue;
-
-                    //System.out.println("Term diproses: " + stemmed);
-
                     Term existingTerm = findTermInDictionary(stemmed);
 
-                    if (existingTerm == null){
-                        Term newTerm = new Term(stemmed,1);
-                        String docName = "doc" + docId;
+                    if (stemmed.isEmpty()) continue;
+
+                    if(existingTerm == null) {
+                        Term newTerm = new Term(stemmed);
                         Document newDoc = new Document(docName, 1);
                         newTerm.setDocs(newDoc);
+                        newTerm.setDF(1);
                         dictionary.addSort(newTerm);
                         selectedTerms.addSort(newTerm);
-                    } else {
-                        if (!containsDoc(existingTerm, docId)) {
-                            existingTerm.setDF(existingTerm.getDF() + 1);
-                        }
-                        String docName = file.getName().split("\\W+")[0];
+                } else {
+                        LinkedListOrdered<Document> docs = existingTerm.getDocs();
+                        boolean docExists = false;
 
-                        for (Document doc : existingTerm.getDocs()) {
-                            if (doc.getName().equals(docName)){
+                        ListIterator<Document> docIt = docs.listIterator();
+                        while (docIt.hasNext()) {
+                            Document doc = docIt.next();
+                            if (doc.getName().equals(docName)) {
                                 doc.setTF(doc.getTF() + 1);
-                                existingTerm.setDF(existingTerm.getDF() + 1);
+                                docExists = true;
+                                break;
                             }
                         }
-                        addDocumentToTerm(existingTerm, docId);
-                        selectedTerms.addSort(existingTerm);
+
+                        if (!docExists) {
+                            Document newDoc = new Document(docName, 1);
+                            docs.addSort(newDoc);
+                            existingTerm.setDF(existingTerm.getDF() + 1);
+                            
+                        }
+
+                        boolean alreadyAdded = false;
+                        ListIterator<Term> termIt = selectedTerms.listIterator();
+                        while (termIt.hasNext()) {
+                            if (termIt.next().getTerm().equals(stemmed)) {
+                                alreadyAdded = true;
+                                break;
+                            }
+                        }
+                        if (!alreadyAdded) {
+                            selectedTerms.addSort(existingTerm);
+                        }
+
+                    // Term existingTerm = findTermInDictionary(stemmed);
+
+                    // if (existingTerm == null){
+                    //     Term newTerm = new Term(stemmed,1);
+                    //     String docName = "doc" + docId;
+                    //     Document newDoc = new Document(docName, 1);
+                    //     newTerm.setDocs(newDoc);
+                    //     dictionary.addSort(newTerm);
+                    //     selectedTerms.addSort(newTerm);
+                    // } else {
+                    //     if (containsDoc(existingTerm, docId)) {
+                    //         existingTerm.setDF(existingTerm.getDF() + 1);
+                    //     }
+                        
+                    //     String docName = file.getName().split("\\W+")[0];
+
+                    //     for (Document doc : existingTerm.getDocs()) {
+                    //         if (doc.getName().equals(docName)){
+                    //             doc.setTF(doc.getTF() + 1);
+                    //             existingTerm.setDF(existingTerm.getDF() + 1);
+                    //         }
+                    //     }
+                    //     addDocumentToTerm(existingTerm, docId);
+                    //     selectedTerms.addSort(existingTerm);
+                    // }
                     }
                 }
             }

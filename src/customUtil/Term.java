@@ -11,6 +11,9 @@ public class Term implements Comparable<Term> {
 
     public Term(String term) {
         this.term = term;
+        this.df = -1;
+        this.idf = 0;
+        this.docs = new LinkedListOrdered<>();
     }
 
     public Term(String term, int df) {
